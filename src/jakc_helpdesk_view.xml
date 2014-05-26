@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="windows-1252"?>
+<openerp>
+    <data>
+	<menuitem name="Helpdesk" id="base.helpdesk_menu" parent="jakc_itms.itms_main_menu"/>
+        
+        <!-- HELPDESK/CATEGORY -->
+		
+        <record model="ir.ui.view" id="view_helpdesk_category_form">
+            <field name="name">helpdesk.category.form</field>
+            <field name="model">helpdesk.category</field>						
+            <field name="type">form</field>						
+            <field name="arch" type="xml">
+                <form string="Helpdesk Category">  
+                    <group>                                                    
+                        <field name="name"/>                            
+                    </group>
+                </form>
+            </field>
+        </record>
+		
+        <record model="ir.ui.view" id="view_helpdesk_category_tree">
+            <field name="name">helpdesk.category.tree</field>
+            <field name="model">helpdesk.category</field>			
+            <field name="type">tree</field>						
+            <field name="arch" type="xml">
+                <tree string="Helpdesk Category">                    
+                    <field name="name"/>		
+                </tree>
+            </field>
+        </record>
+        
+        <!-- HELPDESK/TICKET -->
+		
+        <record model="ir.ui.view" id="view_helpdesk_ticket_form">
+            <field name="name">helpdesk.ticket.form</field>
+            <field name="model">helpdesk.ticket</field>						
+            <field name="type">form</field>						
+            <field name="arch" type="xml">
+                <form string="Helpdesk Ticket" version="7.0">  
+                    <header>
+                        <button name="case_open" string="Open" type="object" class="oe_highlight" states="draft,pending"/>
+                        <button name="case_close" string="Close Case" type="object" states="draft,pending"/>
+                        <button name="case_close" string="Close Case" type="object" states="open" class="oe_highlight"/>
+                        <button name="case_pending" string="Pending" type="object" states="draft"/>
+                        <button name="case_pending" string="Pending" type="object"  states="open"/>
+                        <button name="case_reset" string="Reset to Draft" type="object" states="cancel,done"/>
+                        <button name="case_escalate" string="Escalate" type="object" states="open,draft,pending"/>
+                        <button name="case_cancel" string="Cancel Case" type="object" states="draft,open,pending"/>
+                        <field name="state" nolabel="1" widget="statusbar" statusbar_visible="draft,open,done" statusbar_colors='{"pending":"blue"}'/>                        
+                    </header>
+                    <sheet string="Helpdesk Support">
+                        <group cols="4" class="oe_header">
+                            <field name="name"/>
+                            <field name="start_date"/>                            
+                            <field name="sender"/>		
+                            <field name="email"/>		
+                            <field name="category"/>		
+                            <field name="priority"/>		
+                            <field name="technician"/>
+                            <field name="asset"/>		                            
+                            <field name="end_date"/>		
+                            <field name="duration"/>		
+                            <field name="state"/>		                                
+                        </group>
+                        <notebook cols="4">
+                            <page string="Problem">
+                                <field name="message"/>		
+                            </page>
+                            <page string="Conversation">
+                                <field name="conversation_ids" widget="one2many_list">
+                                        <tree string="Conversation" editable="bottom">
+                                            <field name="message_date"/>                            
+                                            <field name="from_name"/>                            
+                                            <field name="from_email"/>                            
+                                            <field name="message"/>                                                                            
+                                        </tree>
+                                </field>					                                
+                            </page>
+                            <page string="Resolution">
+                                <field name="resolution"/>
+                            </page>                                                        
+                        </notebook>                                                        
+                    </sheet>
+                </form>
+            </field>
+        </record>
+		
+        <record model="ir.ui.view" id="view_helpdesk_ticket_tree">
+            <field name="name">helpdesk.ticket.tree</field>
+            <field name="model">helpdesk.ticket</field>			
+            <field name="type">tree</field>						
+            <field name="arch" type="xml">
+                <tree string="Asset Status">
+                    <field name="trackid"/>		
+                    <field name="name"/>		
+                </tree>
+            </field>
+        </record>                                       
+                                                                                
+        <record model="ir.ui.view" id="helpdesk_ticket_filter">
+            <field name="name">Helpdesk Ticket Search</field>
+            <field name="model">helpdesk.ticket</field>
+            <field name="arch" type="xml">
+                <search string="Search Helpdesk">
+                    <field name="name"/>
+                    <field name="start_date"/>
+                    <filter icon="terp-check" string="New" name="current" domain="[('state','=','draft')]" help="New Helpdesk Request" />
+                    <filter icon="terp-camera_test" string="Open" domain="[('state','=','open')]" help="Open Helpdesk Request" />
+                    <filter icon="terp-gtk-media-pause" string="Pending" domain="[('state','=','pending')]" help="All pending Helpdesk Request" />
+                    <separator/>
+                    <field name="technician"/>                    
+                    <group expand="0" string="Group By...">
+                        <filter string="Techician" icon="terp-personal" domain="[]" help="Technician" context="{'group_by':'technician'}" />
+                        <filter string="Priority" icon="terp-rating-rated" domain="[]" context="{'group_by':'priority'}" />
+                        <filter string="Status" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}" />                        
+                    </group>
+                </search>
+            </field>
+        </record>                                        
+        
+        <!-- ASSETS/ACTION -->
+	<record model="ir.actions.act_window" id="action_helpdesk_category">
+            <field name="name">Helpdesk Category</field>
+            <field name="res_model">helpdesk.category</field>
+            <field name="view_mode">tree,form</field>
+        </record>		
+                
+        <record model="ir.actions.act_window" id="action_helpdesk_ticket">
+            <field name="name">Helpdesk Ticket</field>
+            <field name="res_model">helpdesk.ticket</field>
+            <field name="view_mode">tree,form</field>
+        </record>	
+                        
+        
+        <!-- HELPDESK/MENU -->        
+        <menuitem id="helpdesk_category_menu" name="Category" parent="base.helpdesk_menu"  action="action_helpdesk_category" sequence="1"/>
+        <menuitem id="helpdesk_ticket_menu" name="Ticket" parent="base.helpdesk_menu"  action="action_helpdesk_ticket" sequence="2"/>         
+        	
+    </data>                
+</openerp>
