@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+        <record id="view_asset_assets_form_inherit" model="ir.ui.view">
+            <field name="name">asset.assets.form.inherit</field>
+            <field name="model">asset.assets</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="jakc_assets.view_asset_assets_form"/>					
+            <field name="arch" type="xml">
+                <notebook position="inside">
+                    <page string="History">
+                        <field name="ticket_ids" string="History">
+                            <tree string="History">
+                                <field name="start_date"/>
+                                <field name="name"/>
+                            </tree>
+                        </field>                                                
+                    </page>
+                </notebook>			
+            </field>
+        </record>
+    </data>
+</openerp>

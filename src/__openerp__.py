@@ -6,7 +6,8 @@
     'depends' : ['base_setup','base','mail','jakc_itms','jakc_assets'],
     'init_xml' : [],
     'data' : [			
-        'jakc_helpdesk_view.xml',				
+        'jakc_helpdesk_view.xml',
+        'jakc_assets_view.xml',
     ],
     'installable': True,
     'auto_install': False,

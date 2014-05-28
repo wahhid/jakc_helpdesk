@@ -39,7 +39,7 @@
                 <form string="Helpdesk Ticket" version="7.0">  
                     <header>
                         <button name="case_open" string="Open" type="object" class="oe_highlight" states="draft,pending"/>
-                        <button name="case_close" string="Close Case" type="object" states="draft,pending"/>
+                        <button name="case_close" string="Close Case" type="object" states="draft,pending" confirm="Are you sure to close this ticket?"/>
                         <button name="case_close" string="Close Case" type="object" states="open" class="oe_highlight"/>
                         <button name="case_pending" string="Pending" type="object" states="draft"/>
                         <button name="case_pending" string="Pending" type="object"  states="open"/>
@@ -50,6 +50,7 @@
                     </header>
                     <sheet string="Helpdesk Support">
                         <group cols="4" class="oe_header">
+                            <field name="trackid"/>
                             <field name="name"/>
                             <field name="start_date"/>                            
                             <field name="sender"/>		
@@ -92,7 +93,10 @@
             <field name="arch" type="xml">
                 <tree string="Asset Status">
                     <field name="trackid"/>		
-                    <field name="name"/>		
+                    <field name="start_date"/>		
+                    <field name="name"/>
+                    <field name="email"/>
+                    <field name="state"/>                    
                 </tree>
             </field>
         </record>                                       
@@ -102,13 +106,13 @@
             <field name="model">helpdesk.ticket</field>
             <field name="arch" type="xml">
                 <search string="Search Helpdesk">
+                    <field name="trackid"/>
                     <field name="name"/>
                     <field name="start_date"/>
+                    <field name="technician"/>
                     <filter icon="terp-check" string="New" name="current" domain="[('state','=','draft')]" help="New Helpdesk Request" />
                     <filter icon="terp-camera_test" string="Open" domain="[('state','=','open')]" help="Open Helpdesk Request" />
-                    <filter icon="terp-gtk-media-pause" string="Pending" domain="[('state','=','pending')]" help="All pending Helpdesk Request" />
-                    <separator/>
-                    <field name="technician"/>                    
+                    <filter icon="terp-gtk-media-pause" string="Pending" domain="[('state','=','pending')]" help="All pending Helpdesk Request" />                    
                     <group expand="0" string="Group By...">
                         <filter string="Techician" icon="terp-personal" domain="[]" help="Technician" context="{'group_by':'technician'}" />
                         <filter string="Priority" icon="terp-rating-rated" domain="[]" context="{'group_by':'priority'}" />

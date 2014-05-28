@@ -1,5 +1,7 @@
 from openerp.osv import fields, osv
 from datetime import datetime
+import string
+import random
 
 class helpdesk_category(osv.osv):
     _name = "helpdesk.category"
@@ -35,16 +37,21 @@ class helpdesk_ticket(osv.osv):
     _name = "helpdesk.ticket"
     _description = "Helpdesk Ticket"
     
-    def case_close(self, cr, uid, ids, context=None):
-        self.write(cr,uid,ids,{'state':'done'})        
+    def case_close(self, cr, uid, ids, context=None):        
+        self.write(cr,uid,ids,{'end_date': datetime.now(),'state':'done'})        
         return True
         
     def case_reset(self, cr, uid, ids, context=None):
         self.write(cr,uid,ids,{'state':'draft'})        
         return True
-        
+    
+    def _id_generator(self,cr,uid,context=None):
+        size = 10
+        chars= string.ascii_uppercase + string.digits
+        return ''.join(random.choice(chars) for _ in range(size))
+    
     _columns = {
-        'trackid': fields.char('Track ID', size=20, readOnly=True),        
+        'trackid': fields.char('Track ID', size=20, readonly=True),        
         'name': fields.char('Subject', size=100, required=True),            
         'sender': fields.char('Sender Name', size=100, required=True),            
         'email': fields.char('Sender Email', size=100, required=True),            
@@ -61,11 +68,16 @@ class helpdesk_ticket(osv.osv):
         'active': fields.boolean('Active', required=False),
         'state': fields.selection([('draft', 'New'),('cancel', 'Cancelled'),('open', 'In Progress'),('pending', 'Pending'),('done', 'Closed')], 'Status', size=16, readonly=True),
     }    
-    _defaults = {
+    _defaults = {        
         'active': lambda *a: 1,                        
         'state': lambda *a: 'draft',
-        'start_date': lambda *a: fields.datetime.now(),        
+        'start_date': lambda *a: fields.datetime.now(),
         'priority': lambda *a: 'Normal',
     }
+    
+    def create(self, cr, uid, values, context=None):		                        
+        trackid = self._id_generator(cr, uid, context)
+        values.update({'trackid':trackid})        
+	return super(helpdesk_ticket, self).create(cr, uid, values, context = context)
     
 helpdesk_ticket()
