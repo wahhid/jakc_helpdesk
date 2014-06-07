@@ -65,7 +65,7 @@
                         </group>
                         <notebook cols="4">
                             <page string="Problem">
-                                <field name="message"/>		
+                                <field name="description"/>		
                             </page>
                             <page string="Conversation">
                                 <field name="conversation_ids" widget="one2many_list">
