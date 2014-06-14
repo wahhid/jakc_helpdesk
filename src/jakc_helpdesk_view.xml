@@ -29,6 +29,30 @@
             </field>
         </record>
         
+        <!-- HELPDESK/CONVERSATION -->
+		
+        <record model="ir.ui.view" id="view_helpdesk_conversation_form">
+            <field name="name">helpdesk.conversation.form</field>
+            <field name="model">helpdesk.conversation</field>						            					
+            <field name="arch" type="xml">
+                <form string="Helpdesk Conversation" version="7.0">  
+                    <group>                                                    
+                        <field name="ticket_id"/>
+                        <field name="message_date"/>
+                        <field name="helpdesk_conversation_recipients" widget="many2many_tags"/>                                                    
+                        <field name="description" widget="html"/>
+                        <field name="attachment_ids" widget="many2many_binary"/>
+                        <field name="inbound"/>
+                    </group>                    
+                    <footer>
+                        <button name="save_conversation_action" string="Send Conversation" type="object" class="oe_highlight"/>                       
+                        or
+                        <button string="Cancel" class="oe_link" special="cancel" />                    
+                    </footer>                    
+                </form>
+            </field>
+        </record>		       
+                
         <!-- HELPDESK/TICKET -->
 		
         <record model="ir.ui.view" id="view_helpdesk_ticket_form">
@@ -37,25 +61,23 @@
             <field name="type">form</field>						
             <field name="arch" type="xml">
                 <form string="Helpdesk Ticket" version="7.0">  
-                    <header>
-                        <button name="case_open" string="Open" type="object" class="oe_highlight" states="draft,pending"/>
-                        <button name="case_close" string="Close Case" type="object" states="draft,pending" confirm="Are you sure to close this ticket?"/>
-                        <button name="case_close" string="Close Case" type="object" states="open" class="oe_highlight"/>
-                        <button name="case_pending" string="Pending" type="object" states="draft"/>
-                        <button name="case_pending" string="Pending" type="object"  states="open"/>
-                        <button name="case_reset" string="Reset to Draft" type="object" states="cancel,done"/>
-                        <button name="case_escalate" string="Escalate" type="object" states="open,draft,pending"/>
-                        <button name="case_cancel" string="Cancel Case" type="object" states="draft,open,pending"/>
-                        <field name="state" nolabel="1" widget="statusbar" statusbar_visible="draft,open,done" statusbar_colors='{"pending":"blue"}'/>                        
+                    <header>                        
+                        <button name="case_response" string="Response" type="object" class="oe_highlight" states="draft"/>                                                                       
+                        <button name="case_close" string="Close Case" type="object" states="open" confirm="Are you sure to close this ticket?"/>                                                
+                        <button name="case_pending" string="Pending" type="object" states="open"/>                        
+                        <button name="case_cancel_pending" string="Cancel Pending" type="object" class="oe_highlight" states="pending"/>
+                        <button name="case_reset" string="Re-Open" type="object" states="cancel,done"/>                        
+                        <button name="case_cancel" string="Cancel Case" type="object" states="open"/>                        
+                        <field name="state" widget="statusbar" statusbar_visible="draft,open,done,pending,cancel" statusbar_colors='{"draft":"blue","response":"blue","open":"blue","done":"blue","cancel":"red","pending":"red"}' />                                               
                     </header>
                     <sheet string="Helpdesk Support">
                         <group cols="4" class="oe_header">
                             <field name="trackid"/>
                             <field name="name"/>
-                            <field name="start_date"/>                            
-                            <field name="sender"/>		
-                            <field name="email"/>		
+                            <field name="start_date"/>     
+                            <field name="response_date"/>                            
                             <field name="category"/>		
+                            <field name="employee"/>
                             <field name="priority"/>		
                             <field name="technician"/>
                             <field name="asset"/>		                            
@@ -67,21 +89,23 @@
                             <page string="Problem">
                                 <field name="description"/>		
                             </page>
-                            <page string="Conversation">
-                                <field name="conversation_ids" widget="one2many_list">
-                                        <tree string="Conversation" editable="bottom">
-                                            <field name="message_date"/>                            
-                                            <field name="from_name"/>                            
-                                            <field name="from_email"/>                            
-                                            <field name="message"/>                                                                            
-                                        </tree>
-                                </field>					                                
-                            </page>
                             <page string="Resolution">
                                 <field name="resolution"/>
                             </page>                                                        
                         </notebook>                                                        
                     </sheet>
+                    
+                    <div class="oe_chatter">
+                        <button name="add_conversation_action" icon="gtk-add"  string="Add Conversation" type="object"/>
+                        <field name="conversation_ids" widget="one2many_list">
+                            <tree string="Conversation" >
+                                <field name="message_date"/>                            
+                                <field name="helpdesk_conversation_recipients" widget="many2many_tags"/>                                                                                       
+                                <field name="description" widget="html"/>                                                                            
+                            </tree>
+                        </field>					                                
+                    </div>                    
+                    
                 </form>
             </field>
         </record>
@@ -95,7 +119,7 @@
                     <field name="trackid"/>		
                     <field name="start_date"/>		
                     <field name="name"/>
-                    <field name="email"/>
+                    <field name="employee"/>
                     <field name="state"/>                    
                 </tree>
             </field>
@@ -110,7 +134,7 @@
                     <field name="name"/>
                     <field name="start_date"/>
                     <field name="technician"/>
-                    <filter icon="terp-check" string="New" name="current" domain="[('state','=','draft')]" help="New Helpdesk Request" />
+                    <filter icon="terp-check" string="New" name="Current" domain="[('state','=','draft')]" help="New Helpdesk Request" />
                     <filter icon="terp-camera_test" string="Open" domain="[('state','=','open')]" help="Open Helpdesk Request" />
                     <filter icon="terp-gtk-media-pause" string="Pending" domain="[('state','=','pending')]" help="All pending Helpdesk Request" />                    
                     <group expand="0" string="Group By...">
@@ -135,6 +159,15 @@
             <field name="view_mode">tree,form</field>
         </record>	
                         
+        <record model="ir.actions.act_window" id="action_add_conversation" >
+            <field name="name">Add Conversation</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">helpdesk.conversation</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="view_id" ref="view_helpdesk_conversation_form"/>
+        </record>                       
         
         <!-- HELPDESK/MENU -->        
         <menuitem id="helpdesk_category_menu" name="Category" parent="base.helpdesk_menu"  action="action_helpdesk_category" sequence="1"/>
