@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="windows-1252"?>
+<openerp>
+    <data>
+        <menuitem name="Helpdesk" id="base.helpdesk_menu" parent="jakc_itms.itms_main_menu"/>
+        <menuitem name="Reporting" id="base.itms_report_menu" parent="jakc_itms.itms_main_menu"/>
+        
+        <!-- Helpdesk Reporting Menu -->        
+        <menuitem name="Helpdesk Daily Detail Report" id="helpdesk_daily_detail_report_menu" parent="base.itms_report_menu" action="action_helpdesk_daily_detail_report_form"/>
+        <menuitem name="Helpdesk Monthly Detail Report" id="helpdesk_monthly_detail_report_menu" parent="base.itms_report_menu" action="action_helpdesk_monthly_detail_report_form"/>
+        <menuitem name="Helpdesk Monthly Summary Report" id="helpdesk_monthly_summary_report_menu" parent="base.itms_report_menu" action="action_helpdesk_monthly_summary_report_form"/>
+    </data>
+</openerp>

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="windows-1252"?>
+<openerp>
+    <data>
+        <record id="view_helpdesk_daily_detail_report_form" model="ir.ui.view">
+            <field name="name">Helpdesk Daily Detail Report</field>
+            <field name="model">helpdesk.daily.detail.report</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form col="4" string="Helpdesk Daily Detail Report" version="7.0">
+                    <group>
+                        <field name="start_date"/>
+                        <field name="end_date"/>
+                    </group>
+                    <footer>
+                        <button name="generate_report" string="Show" type="object" default_focus="1" class="oe_highlight"/>
+                        or
+                        <button string="Cancel" class="oe_link" special="cancel"/>
+                    </footer>
+                </form>                                
+            </field>
+        </record>
+        
+        <record id="action_helpdesk_daily_detail_report_form" model="ir.actions.act_window">
+            <field name="name">Helpdesk Daily Detail Report</field>
+            <field name="res_model">helpdesk.daily.detail.report</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+        
+        <record id="view_helpdesk_monthly_detail_report_form" model="ir.ui.view">
+            <field name="name">Helpdesk Monthly Detail Report</field>
+            <field name="model">helpdesk.monthly.detail.report</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form col="4" string="Helpdesk Monthly Detail Report" version="7.0">
+                    <group>
+                        <field name="start_date"/>
+                        <field name="end_date"/>
+                    </group>
+                    <footer>
+                        <button name="generate_report" string="Show" type="object" default_focus="1" class="oe_highlight"/>
+                        or
+                        <button string="Cancel" class="oe_link" special="cancel"/>
+                    </footer>
+                </form>                                
+            </field>
+        </record>
+        
+        <record id="action_helpdesk_monthly_detail_report_form" model="ir.actions.act_window">
+            <field name="name">Helpdesk Monthly Detail Report</field>
+            <field name="res_model">helpdesk.monthly.detail.report</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>        
+        
+        <record id="view_helpdesk_monthly_summary_report_form" model="ir.ui.view">
+            <field name="name">Helpdesk Monthly Summary Report</field>
+            <field name="model">helpdesk.monthly.summary.report</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form col="4" string="Helpdesk Monthly Summary Report" version="7.0">
+                    <group>
+                        <field name="start_date"/>
+                        <field name="end_date"/>
+                    </group>
+                    <footer>
+                        <button name="generate_report" string="Show" type="object" default_focus="1" class="oe_highlight"/>
+                        or
+                        <button string="Cancel" class="oe_link" special="cancel"/>
+                    </footer>
+                </form>                                
+            </field>
+        </record>
+        
+        <record id="action_helpdesk_monthly_summary_report_form" model="ir.actions.act_window">
+            <field name="name">Helpdesk Monthly Summary Report</field>
+            <field name="res_model">helpdesk.monthly.summary.report</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record> 
+        
+                
+    </data>
+</openerp>
+
+	

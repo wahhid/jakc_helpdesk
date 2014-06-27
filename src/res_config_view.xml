@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_itms_configuration" model="ir.ui.view">
+            <field name="name">ITMS Settings</field>
+            <field name="model">itms.config.settings</field>
+            <field name="arch" type="xml">
+                <form string="Configure ITMS" version="7.0" class="oe_form_configuration">
+                    <header>
+                        <button string="Apply" type="object" name="execute" class="oe_highlight"/>
+                        or
+                        <button string="Cancel" type="object" name="cancel" class="oe_link"/>
+                    </header>
+                    <separator string="IT Management Service"/>
+                    <group name="recruitment_grp">
+                        <label for="id" string="Report Server"/>
+                        <div name="servers">
+                            <div>
+                                <field name="server_url" class="oe_inline"/>                                
+                            </div>
+                        </div>
+                    </group>     
+                </form>
+            </field>
+        </record>
+
+        <record id="action_itms_configuration" model="ir.actions.act_window">
+            <field name="name">Configure IT Management Service</field>
+            <field name="res_model">itms.config.settings</field>
+            <field name="view_id" ref="view_itms_configuration"/>
+            <field name="view_mode">form</field>
+            <field name="target">inline</field>
+        </record>
+
+        <menuitem id="menu_itms_configuration" name="ITMS" parent="base.menu_config" sequence="15" action="action_itms_configuration"/>        
+    </data>
+</openerp>

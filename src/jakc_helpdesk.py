@@ -1,11 +1,30 @@
 from openerp.addons.base_status.base_state import base_state
 from openerp.addons.base_status.base_stage import base_stage
+
+from imaplib import IMAP4
+from imaplib import IMAP4_SSL
+from poplib import POP3
+from poplib import POP3_SSL
+import xmlrpclib
+
+
 from openerp.osv import fields, osv
 from datetime import datetime
+from openerp import netsvc
 from openerp.tools import html2plaintext
+from openerp.tools.translate import _
+from parsemail import Attachment
+
 import string
 import random
 import time
+import re
+import email
+from email.message import Message
+import base64
+import dateutil
+import pytz
+
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -13,6 +32,7 @@ _logger = logging.getLogger(__name__)
 AVAILABLE_STATES = [
     ('draft','New'),    
     ('open','Open'),    
+    ('request','Request For Approval'),    
     ('cancel', 'Cancelled'),
     ('done', 'Closed'),
     ('pending','Pending')
@@ -34,126 +54,6 @@ class helpdesk_priority(osv.osv):
     }        
     
 helpdesk_priority()
-
-class helpdesk_conversation(osv.osv):
-    _name = "helpdesk.conversation"
-    _description = "Helpdesk Conversation"
-    _inherit = ['mail.thread','ir.needaction_mixin']    
-    
-    def save_conversation_action(self, cr, uid, ids, context=None):                
-        for message in self.browse(cr, uid, ids, context=context):
-            values = {}
-            values['ticket_id'] = context.get('ticket_id',False)
-            values['message_date'] = message.message_date
-            values['message'] = message.message
-            values['inbound'] = message.inbound
-            _logger.info('Conversation values : ' + values)                        
-            self.create(cr,uid,values,context=context)
-        return {'type': 'ir.actions.act_window_close'}
-        
-    _columns = {
-        'ticket_id': fields.many2one('helpdesk.ticket', 'Ticket', readonly=True),       
-        'helpdesk_conversation_recipients': fields.many2many('hr.employee', 
-            'helpdesk_conversation_recipients_rel',
-            'helpdesk_conversation_id',
-            'hr_employee_id',
-            'Recipients'),
-        'message_date': fields.datetime('Date'),
-        'name': fields.char('Name', size=100, required=True),
-        'description': fields.text('Description'),
-        'attachment_ids': fields.many2many('ir.attachment',
-            'helpdesk_conversation_ir_attachments_rel',
-            'helpdesk_conversation_id', 'ir_attachment_id', 'Attachments'),        
-        'inbound': fields.boolean('Inbound'),             
-    }
-    _order = "message_date desc"
-            
-    _defaults = {        
-        'message_date': lambda *a: fields.datetime.now(),
-    }            
-    
-    def _process_incoming_conversation(self,cr, uid,context=None):        
-        _logger.info('Process Incoming Conversation Started')
-        return True
-        
-    def _get_employee(self, cr, uid, emp_email, context=None):
-        obj = self.pool.get('hr.employee')
-        ids =  obj.search(cr, uid, [('work_email','=',emp_email)], context=context)
-        if len(ids) > 0:
-            employees = obj.browse(cr, uid, ids, context=context)
-            return employees[0]
-        else:
-            return False
-        
-    
-    # -------------------------------------------------------
-    # Mail gateway
-    # -------------------------------------------------------
-
-    def message_new(self, cr, uid, msg, custom_values=None, context=None):
-        """ Overrides mail_thread message_new that is called by the mailgateway
-            through message_process.
-            This override updates the document according to the email.
-        """
-        if custom_values is None: custom_values = {}
-        desc = html2plaintext(msg.get('body')) if msg.get('body') else ''
-        defaults = {
-            'message_date': msg.get('date'),
-            'name': msg.get('subject') or _("No Subject"),
-            'description': 'Ticket Created',        
-            'inbound': True,
-        }
-        defaults.update(custom_values)
-        message_id = super(helpdesk_conversation,self).message_new(cr, uid, msg, custom_values=defaults, context=context)    
-        
-        email_from = msg.get('email_from')[msg.get('email_from').find("<")+1:msg.get('email_from').find(">")]
-        employee = self._get_employee(cr, uid, email_from, context=context)
-                    
-        ticket_id = None
-        subject = msg.get('subject')
-        ticket_id_prefix = subject.find('<')
-        ticket_id_suffix = subject.find('>')
-        
-        if  ticket_id_prefix > -1 or  ticket_id_suffix > -1:
-            ticket_id = subject[ticket_id_prefix+1:ticket_id_suffix]
- 
-        helpdesk_ticket_obj = self.pool.get('helpdesk.ticket')
-        
-        if ticket_id == None:            
-            #Create Ticket
-            ticket = {}
-            if employee == False:
-                ticket['employee'] = 1
-            ticket['employee'] = employee['id']
-            ticket['name'] = msg.get('subject') or _("No Subject")
-            ticket['description'] = desc            
-            ticket_id = helpdesk_ticket_obj.create(cr, uid, ticket, context=context)
-            ticket_datas = self.pool.get('helpdesk.ticket').browse(cr, uid, [ticket_id], context=context)        
-            ticket_data = ticket_datas[0]
-            _logger.info('Sending Ticket Created Notification')
-            mail_mail = self.pool.get('mail.mail')
-            mail_ids = []
-            mail_ids.append(mail_mail.create(cr, uid, {
-                'email_from': 'helpdesk@jakc.com',
-                'email_to': msg.get('email_from'),
-                'subject': "<" + ticket_data['trackid'] + ">" + ticket_data['name'],
-                'body_html': 'Ticket was created by Helpdesk System'
-                }, context=context))
-            mail_mail.send(cr, uid, mail_ids, context=context)
-            _logger.info('Sending Ticket Created Notification Successfully')                    
-                                
-        helpdesk_conversation_obj = self.pool.get('helpdesk.conversation')        
-        conversation = helpdesk_conversation_obj.write(cr, uid, [message_id],{'ticket_id':ticket_id},context=context)        
-        
-        #helpdesk_conversation_recipient_obj = self.pool.get('helpdesk_conversation_recipients_rel')
-        #recipients = {}
-        #recipients['helpdesk_conversation_id'] = message_id
-        #recipients['hr_employee_id'] = 1
-        #helpdesk_conversation_recipient_obj.create(cr, uid, recipients, context=context)        
-        
-        return message_id
-            
-helpdesk_conversation()
     
 class helpdesk_conversation_employee(osv.osv):
     _name = "helpdesk.conversation.employee"
@@ -165,12 +65,155 @@ class helpdesk_conversation_employee(osv.osv):
     
 helpdesk_conversation_employee()
 
-            
+
 class helpdesk_ticket(base_state, base_stage, osv.osv):
     _name = "helpdesk.ticket"
     _description = "Helpdesk Ticket"            
+        
+    def connectpop3server(self, cr, uid, context=None):
+        pop3server = 'localhost'
+        port = '110'
+        user = 'helpdesk@jakc.com'
+        password = 'P@ssw0rd'
+        connection = POP3(pop3server, int(port))        
+        connection.user(user)
+        connection.pass_(password)
+        return connection
     
+    def _parse_track_id(self, subject):
+        track_id_prefix = subject.find('<')
+        track_id_suffix = subject.find('>')
+        if  track_id_prefix > -1 and  track_id_suffix > -1:
+            track_id = subject[track_id_prefix+1:track_id_suffix]
+            return track_id
+        else:            
+            return None    
+    
+    def _get_employee_by_email(self, cr, uid, email_from, context=None):
+        obj = self.pool.get('hr.employee')
+        ids =  obj.search(cr, uid, [('work_email','=',email_from)], context=context)
+        if len(ids) > 0:
+            employees = obj.browse(cr, uid, ids, context=context)
+            return employees[0]
+        else:
+            return None
+        
+    def _get_employee(self, cr, uid, id, context=None):
+        obj = self.pool.get('hr.employee')        
+        employee = obj.browse(cr, uid, id, context=context)        
+        return employee
+        
+    
+    def _get_ticket_by_trackid(self, cr, uid, track_id, context=None):        
+        ids = self.pool.get('helpdesk.ticket').search(cr, uid, [('trackid','=',track_id)], context=context)
+        if len(ids) > 0:
+            tickets = self.pool.get('helpdesk.ticket').browse(cr, uid, ids, context=context)
+            return tickets[0]
+        else:
+            return None
+
+    #Fetch Helpdesk Ticket by ID
+    def _get_ticket(self, cr, uid, id, context=None):
+        ticket = self.pool.get('helpdesk.ticket').browse(cr, uid, id, context=context)                                        
+        return ticket
+                       
+    def _create_conversation(self, cr, uid, values , context=None):
+        return self.pool.get('helpdesk.conversation').create(cr, uid, values, context=context)
+    
+    def _send_email_notification(self, cr, uid, values, context=None):
+        _logger.info(values['start_logger'])
+        mail_mail = self.pool.get('mail.mail')
+        mail_ids = []
+        mail_ids.append(mail_mail.create(cr, uid, {
+            'email_from': values['email_from'],
+            'email_to': values['email_to'],
+            'subject': values['subject'],
+            'body_html': values['body_html'],
+            }, context=context))
+        mail_mail.send(cr, uid, mail_ids, context=context)
+        _logger.info(values['end_logger'])          
+    
+    def fetchmail(self,cr,uid,context=None):
+        _logger.info('Start Fetch Helpdesk Email')        
+        mailattach = Attachment()                                   
+        pop_server = self.connectpop3server(cr,uid,context=context)
+        (numMsgs, totalSize) = pop_server.stat()
+        pop_server.list()
+        for num in range(1, numMsgs + 1):
+            (header, msges, octets) = pop_server.retr(num)
+            raw = '\n'.join(msges)                      
+            msg=email.message_from_string(raw)            
+            attachments=mailattach.get_mail_contents(msg)                       
+            subject=mailattach.getmailheader(msg.get('Subject', ''))
+            desc = html2plaintext(msg.get('body'))
+            from_= mailattach.getmailaddresses(msg, 'from')
+            from_=('', '') if not from_ else from_[0]                                
+            for attach in attachments:
+                # dont forget to be careful to sanitize 'filename' and be carefull
+                # for filename collision, to before to save :
+                print '\tfilename=%r is_body=%s type=%s charset=%s desc=%s size=%d' % (attach.filename, attach.is_body, attach.type, attach.charset, attach.description, 0 if attach.payload==None else len(attach.payload))
+
+                if attach.is_body=='text/plain':
+                    # print first 3 lines
+                    body = ''
+                    payload, used_charset=mailattach.decode_text(attach.payload, attach.charset, 'auto') 
+                    for line in payload.split('\n')[:3]:
+                        # be careful console can be unable to display unicode characters
+                        if line:
+                            print '\t\t', line            
+                            body += line + '\n'
+                            
+            employee = self._get_employee_by_email(cr, uid, from_[1], context=context)    
+                
+            track_id = self._parse_track_id(subject)            
+            if track_id is None:
+                #create ticket
+                ticket_data = {}
+                #Define Employee
+                if employee is None:
+                    #create employee
+                    _logger.info("Create Employee")
+                else:                    
+                    ticket_data['employee'] = employee.id
+                #Define Subject
+                ticket_data['name'] = subject
+                #Define Description               
+                ticket_data['description'] = body
+                ticket_id = self.pool.get('helpdesk.ticket').create(cr, uid, ticket_data,context=context)                                
+                ticket = self.pool.get('helpdesk.ticket').browse(cr, uid, ticket_id, context=context)                
+            else:
+                ticket = self._get_ticket_by_trackid(cr, uid, track_id, context=context)                
+                ticket_id = ticket.id                        
+                conversation_data = {            
+                    'ticket_id': ticket_id,
+                    'message_date': datetime.now(),
+                    'email_from' : employee.id,
+                    'name': subject,
+                    'description': body,        
+                    'inbound': True,
+                }                        
+
+                conversation_id = self.pool.get('helpdesk.conversation').create(cr, uid, conversation_data, context=context)                            
+                _logger.info("Save Conversation")
+                
+                email_data = {}
+                email_data['start_logger'] = 'Start Email Ticket Conversation Notification'
+                email_data['email_from'] = 'helpdesk@jakc.com'
+                email_data['email_to'] = employee.work_email
+                email_data['subject'] = "<" + track_id + "> "  + subject
+                email_data['body_html'] = body
+                email_data['end_logger'] = 'End Email Ticket Conversation Notification'
+                self._send_email_notification(cr, uid, email_data, context=context)                     
+            
+            pop_server.dele(num)   
+            print "POP Deleted" 
+
+        pop_server.quit()
+        _logger.info('End Fetch Helpdesk Email')               
+           
     #Call Add Conversation Form
+    
+    
     def add_conversation_action(self, cr, uid, ids, context=None):               
         print ids
         print context
@@ -183,35 +226,111 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
                'nodestroy': True,
                'target':'new',
                'context': {'ticket_id': ids[0]},
-    }         
+    }       
     
-    #Fetch Helpdesk Ticket by ID
-    def _get_values(self, cr, uid, ids, context=None):
-        obj = self.pool.get('helpdesk.ticket')
-        return obj.browse(cr, uid, ids, context=context)
-                       
+    def approve_reject_action(self, cr, uid, ids, context=None):               
+        return {
+               'type': 'ir.actions.act_window',
+               'name': 'Approve or Reject',
+               'view_mode': 'form',
+               'view_type': 'form',                              
+               'res_model': 'helpdesk.approved',
+               'nodestroy': True,
+               'target':'new',
+               'context': {'ticket_id': ids[0]},
+    } 
+    
+
     def case_response(self, cr, uid, ids, context=None):
-        self.write(cr,uid,ids,{'response_date':datetime.now(),'state':'open'})        
-        ticket_datas  = self._get_values(cr, uid, ids, context=context)        
-        ticket_data = ticket_datas[0]
-        conversation_obj = self.pool.get('helpdesk.conversation')           
+        #Change Status
+        self.write(cr,uid,ids,{'response_date':datetime.now(),'state':'open'})   
+        
+        #Fetch Ticket Informations
+        ticket  = ticket = self.pool.get('helpdesk.ticket').browse(cr, uid, ids[0], context=context)                               
+        #Fetch Employee Information
+        employee = self.pool.get('hr.employee').browse(cr, uid, ticket.employee.id, context=context)
+        _logger.info(employee)
+        if employee is None:
+            _logger.info("Employee None")
+        
+        #Create Conversation
         values = {}
-        values['ticket_id'] = ids[0]
+        values['ticket_id'] = ticket['id']        
+        #values['email_from'] = 'helpdesk@jakc.com'
         values['message_date'] = datetime.now()
         values['description'] = "Ticket was responsed"
-        conversation_obj.create(cr, uid, values, context=context)
-        _logger.info('Sending Ticket Response Notification')
-        mail_mail = self.pool.get('mail.mail')
-        mail_ids = []
-        mail_ids.append(mail_mail.create(cr, uid, {
-            'email_from': 'helpdesk@jakc.com',
-            'email_to': 'whidayat@jakc.com',
-            'subject': "<" + ticket_data['trackid'] + ">" + ticket_data['name'],
-            'body_html': 'Ticket was recorded and it staff will follow up'
-            }, context=context))
-        mail_mail.send(cr, uid, mail_ids, context=context)
-        _logger.info('Sending Ticket Response Notification Successfully')        
+        conversation_id = self.pool.get('helpdesk.conversation').create(cr, uid, values, context=context)
+        
+        #Send Email Notification
+        email_data = {}
+        email_data['start_logger'] = 'Start Email Ticket Response Notification'
+        email_data['email_from'] = 'helpdesk@jakc.com'
+        email_data['email_to'] = employee.work_email
+        email_data['subject'] = "<" + ticket.trackid + "> " + ticket.name
+        email_data['body_html'] = "Dear " + employee.name + "<br/>"  + " We already receieve your  with subject : " + ticket.name + ". We will proceed your request immediately. Thank you"
+        
+        email_data['end_logger'] = 'Start Email Ticket Response Notification'
+        self._send_email_notification(cr, uid, email_data, context=context)                    
+        
         return True
+    
+    def case_request(self, cr, uid, ids, context=None):
+        #Fetch Ticket Informations
+        ticket  = ticket = self.pool.get('helpdesk.ticket').browse(cr, uid, ids[0], context=context)                                               
+
+        if not ticket.resolution:            
+            #raise osv.except_osv(_('Error!'),_('Please complete resolution field.'))            
+            return False
+            #warning = {
+            #    'title': 'Error',
+            #    'message': 'Please complete the resolution for this request'
+            #}
+            #return {'warning': warning}
+        
+        #Change Status
+        self.write(cr,uid,ids,{'state':'request'},context=context)
+        
+        
+        #Create Conversation
+        values = {}
+        values['ticket_id'] = ticket['id']        
+        #values['email_from'] = 'helpdesk@jakc.com'
+        values['message_date'] = datetime.now()
+        values['description'] = "Request for approval"
+        conversation_id = self.pool.get('helpdesk.conversation').create(cr, uid, values, context=context)
+        
+        #Send Email Notification
+        email_data = {}
+        email_data['start_logger'] = 'Start Email Ticket Response Notification'
+        email_data['email_from'] = 'helpdesk@jakc.com'
+        email_data['email_to'] = 'whidayat@jakc.com'
+        email_data['subject'] = "<" + ticket.trackid + "> " + ticket.name
+        msg = '<br/>'.join([
+            'Dear Ibu Maryland',
+            '',
+            '',
+            'Mohon review and approval untuk request ini :',
+            '',
+            'Problem',
+            '',
+            ticket.description,
+            '',
+            '',
+            'Resolution',
+            '',
+            ticket.resolution.replace('\n','<br/>'),
+            '',
+            '',
+            '',
+            'Internal <a href="http://localhost:5000/approve">Approve or Reject</a>',
+            'External <a href="http://localhost:5000/approve">Approve or Reject</a>',
+        ])
+        email_data['body_html'] = msg
+        email_data['end_logger'] = 'Start Email Ticket Response Notification'
+        self._send_email_notification(cr, uid, email_data, context=context)                    
+        
+        return True
+    
     
     def case_pending(self, cr, uid, ids, context=None):        
         self.write(cr,uid,ids,{'state':'pending'})  
@@ -235,23 +354,26 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
     
     def case_close(self, cr, uid, ids, context=None):        
         self.write(cr,uid,ids,{'end_date': datetime.now(),'state':'done'})  
-        conversation_obj = self.pool.get('helpdesk.conversation')
+        
+        ticket  = self.pool.get('helpdesk.ticket').browse(cr, uid, ids[0], context=context)                
+        employee = self.pool.get('hr.employee').browse(cr, uid, ticket.employee.id, context=context)
+        
         values = {}
-        values['ticket_id'] = ids[0]
+        values['ticket_id'] = ticket.id
         values['message_date'] = datetime.now()
         values['description'] = "Ticket Closed"
-        conversation_obj.create(cr, uid, values, context=context)
-        _logger.info('Sending Ticket Closed Notification')
-        mail_mail = self.pool.get('mail.mail')
-        mail_ids = []
-        mail_ids.append(mail_mail.create(cr, uid, {
-            'email_from': 'helpdesk@jakc.com',
-            'email_to': 'whidayat@jakc.com',
-            'subject': 'Ticket Closed',
-            'body_html': 'Ticket Closed'
-            }, context=context))
-        mail_mail.send(cr, uid, mail_ids, context=context)
-        _logger.info('Sending Ticket Closed Notification Successfully')
+        converstion_id = self.pool.get('helpdesk.conversation').create(cr, uid, values, context=context)
+        
+        #Send Email Notification
+        email_data = {}
+        email_data['start_logger'] = 'Start Email Ticket Closed Notification'
+        email_data['email_from'] = 'helpdesk@jakc.com'
+        email_data['email_to'] = employee.work_email
+        email_data['subject'] = "<" + ticket.trackid + "> " + ticket.name + " (Closed)"
+        email_data['body_html'] = "Ticket track id : " + ticket.trackid + " was closed"        
+        email_data['end_logger'] = 'End Email Ticket Closed Notification'
+        self._send_email_notification(cr, uid, email_data, context=context)   
+        
         return True
         
     def case_reset(self, cr, uid, ids, context=None):
@@ -262,8 +384,9 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
         values['message_date'] = datetime.now()
         values['description'] = "Ticket was re-opened"
         conversation_obj.create(cr, uid, values, context=context)        
-        return True
-    
+        return True        
+        
+        
     def _id_generator(self,cr,uid,context=None):
         size = 10
         chars= string.ascii_uppercase + string.digits
@@ -280,26 +403,147 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
         'description': fields.text('Description'),        
         'start_date': fields.datetime('Start Date', readonly=True),
         'response_date': fields.datetime('Response Date', readonly=True),
-        'end_date': fields.datetime('End Date', states={'done': [('readonly', True)]}),
+        'approved_date': fields.datetime('Approve or Reject Date', readonly=True),        
+        'end_date': fields.datetime('End Date', states={'done': [('readonly', True)]}),        
         'resolution': fields.text('Resolution'),
+        'approved_comment': fields.text('Comment'),
         'duration': fields.float('Duration', states={'done': [('readonly', True)]}),
         'active': fields.boolean('Active', required=False),
         'state':  fields.selection(AVAILABLE_STATES, 'Status', size=16, readonly=True),
+        'approved_state': fields.selection([('1', 'Not Approved'),('2', 'Approved'),('3', 'Rejected')],'Approved Status'),
         'conversation_ids': fields.one2many('helpdesk.conversation', 'ticket_id', 'Conversation'),
     }    
     _defaults = {        
         'active': lambda *a: 1,                        
         'state': lambda *a: 'draft',
+        'approved_state': lambda *a: '1',
         'start_date': lambda *a: fields.datetime.now(),
         'priority': lambda *a: '3',
     }
     
     _order = 'start_date desc'
-    
-    
-    def create(self, cr, uid, values, context=None):		                        
-        trackid = self._id_generator(cr, uid, context)
-        values.update({'trackid':trackid})        
-	return super(helpdesk_ticket, self).create(cr, uid, values, context = context)
-    
+        
+    def create(self, cr, uid, values, context=None):		                                
+        trackid = self._id_generator(cr, uid, context=context)        
+        _logger.info("Track ID : " + trackid)
+        #tos=mailattach.getmailaddresses(msg, 'to')                                                                                                           
+        values.update({'trackid':trackid})   
+        values.update({'technician': uid})
+	ticket_id =  super(helpdesk_ticket, self).create(cr, uid, values, context=context)
+        
+        
+        conversation_data = {            
+            'ticket_id': ticket_id,
+            'message_date': datetime.now(),
+            'email_from' : values['employee'],
+            'name': values['name'],
+            'description': values['description'],        
+            'inbound': True,
+        }                        
+
+        conversation_id = self.pool.get('helpdesk.conversation').create(cr, uid, conversation_data, context=context)                            
+        _logger.info("Save Conversation")
+        
+        employee = self.pool.get('hr.employee').browse(cr, uid, values['employee'], context=context)
+        email_data = {}
+        email_data['start_logger'] = 'Start Email Ticket Created Notification'
+        email_data['email_from'] = 'helpdesk@jakc.com'
+        email_data['email_to'] = employee.work_email
+        email_data['subject'] = "<" + trackid + "> Ticket Receieved Notification"
+        email_data['body_html'] = "Ticket Receieved with track id : " + trackid
+        email_data['end_logger'] = 'End Email Ticket Created Notification'
+        self._send_email_notification(cr, uid, email_data, context=context)     
+        
+        return ticket_id
+        
 helpdesk_ticket()
+
+class helpdesk_approve_reject(osv.osv_memory):
+    _name = "helpdesk.approved"
+    _description = "Helpdesk Approved" 
+    
+    def _send_email_notification(self, cr, uid, values, context=None):
+        _logger.info(values['start_logger'])
+        mail_mail = self.pool.get('mail.mail')
+        mail_ids = []
+        mail_ids.append(mail_mail.create(cr, uid, {
+            'email_from': values['email_from'],
+            'email_to': values['email_to'],
+            'subject': values['subject'],
+            'body_html': values['body_html'],
+            }, context=context))
+        mail_mail.send(cr, uid, mail_ids, context=context)
+        _logger.info(values['end_logger'])      
+        
+    def approve_reject(self, cr, uid, ids, context=None):                
+        params = self.browse(cr, uid, ids, context=context)
+        param = params[0]           
+        ticket_id = context.get('ticket_id',False)
+        ticket = {}    
+        ticket['approved_date'] = datetime.now()
+        ticket['approved_state'] = param.approved_state
+        ticket['approved_comment'] = param.approved_comment if param.approved_comment else ''
+        if param.approved_state == '2':            
+            ticket['end_date'] = datetime.now()
+            ticket['state'] = 'done'                
+        self.pool.get('helpdesk.ticket').write(cr, uid, [ticket_id], ticket, context=context)                                
+        conversation_data = {            
+            'ticket_id': ticket_id,
+            'message_date': datetime.now(),
+            #'email_from' : values['employee'],
+            'name': 'Ticket Approved',
+            'description': 'Ticket Approved',        
+            'inbound': False,
+        }                        
+        conversation_id = self.pool.get('helpdesk.conversation').create(cr, uid, conversation_data, context=context)                            
+        _logger.info("Save Conversation")
+        #Fetch Ticket Informations
+        ticket = self.pool.get('helpdesk.ticket').browse(cr, uid, ticket_id, context=context)                               
+        #Fetch Employee Information
+        employee = self.pool.get('hr.employee').browse(cr, uid, ticket.employee.id, context=context)
+        
+        email_data = {}
+        email_data['start_logger'] = 'Start Email Ticket Approval Notification'
+        email_data['email_from'] = 'helpdesk@jakc.com'
+        email_data['email_to'] = employee.work_email
+        email_data['subject'] = "<" + ticket.trackid + "> " + ticket.name + " (Approved)"
+        serverUrl = 'http://localhost:8888/jasperserver'
+        j_username = 'itms_operator'
+        j_password = 'itms123'
+        ParentFolderUri = '/itms'
+        reportUnit = '/itms/itsr_form'
+        url = serverUrl + '/flow.html?_flowId=viewReportFlow&standAlone=true&_flowId=viewReportFlow&ParentFolderUri=' + ParentFolderUri + '&reportUnit=' + reportUnit + '&TICKET_ID=' + str(ticket.id) + '&APPROVED_STATE=2&decorate=no&j_username=' + j_username + '&j_password=' + j_password + '&output=pdf'
+        
+        msg = '<br/>'.join([
+            'Dear ' + employee.name,
+            '',
+            '',
+            'Your ticket with track id : ' + ticket.trackid + ' already approved by IT Manager',
+            'Please download ITSR Form and sign by Department Head',
+            '',
+            '',
+            '<a href="' + url +  '">Download ITSR</a>',
+            '',
+            '',
+            '',
+            'Regards',
+            '',
+            'IT Helpdesk'
+        ])        
+        email_data['body_html'] = msg
+        email_data['end_logger'] = 'End Email Ticket Approval Notification'
+        self._send_email_notification(cr, uid, email_data, context=context)     
+        
+        return True
+                        
+    _columns = {
+        'ticket_id': fields.integer('Ticket'),
+        'approved_state': fields.selection([('2', 'Approved'),('3', 'Rejected')],'Approved Status'),
+        'approved_comment': fields.text('Comment')
+    }    
+    
+    _defaults = {        
+        'approved_state': lambda *a: '2',
+    }
+    
+helpdesk_approve_reject()

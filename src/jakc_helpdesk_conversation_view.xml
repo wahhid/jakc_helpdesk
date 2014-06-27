@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="windows-1252"?>
+
+<openerp>
+    <data>
+        
+        <!-- HELPDESK/CONVERSATION -->		
+        <!-- POPUP WINDOW -->        
+        <record model="ir.ui.view" id="view_helpdesk_conversation_form">
+            <field name="name">helpdesk.conversation.form</field>
+            <field name="model">helpdesk.conversation</field>						            					
+            <field name="arch" type="xml">
+                <form string="Helpdesk Conversation" version="7.0">  
+                    <group>                                                    
+                        <field name="ticket_id"/>
+                        <field name="message_date"/>
+                        <field name="helpdesk_conversation_recipients" widget="many2many_tags"/>                                                    
+                        <field name="description"/>
+                        <field name="attachment_ids" widget="many2many_binary"/>
+                        <field name="inbound"/>
+                    </group>                    
+                    <footer>
+                        <button name="save_conversation_action" string="Send Conversation" type="object" class="oe_highlight"/>                       
+                        or
+                        <button string="Cancel" class="oe_link" special="cancel" />                    
+                    </footer>                    
+                </form>
+            </field>
+        </record>		       
+        
+    </data>
+</openerp>

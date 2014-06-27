@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1252"?>
 <openerp>
     <data>
-	<menuitem name="Helpdesk" id="base.helpdesk_menu" parent="jakc_itms.itms_main_menu"/>
+	
         
         <!-- HELPDESK/CATEGORY -->
 		
@@ -28,31 +28,7 @@
                 </tree>
             </field>
         </record>
-        
-        <!-- HELPDESK/CONVERSATION -->
-		
-        <record model="ir.ui.view" id="view_helpdesk_conversation_form">
-            <field name="name">helpdesk.conversation.form</field>
-            <field name="model">helpdesk.conversation</field>						            					
-            <field name="arch" type="xml">
-                <form string="Helpdesk Conversation" version="7.0">  
-                    <group>                                                    
-                        <field name="ticket_id"/>
-                        <field name="message_date"/>
-                        <field name="helpdesk_conversation_recipients" widget="many2many_tags"/>                                                    
-                        <field name="description" widget="html"/>
-                        <field name="attachment_ids" widget="many2many_binary"/>
-                        <field name="inbound"/>
-                    </group>                    
-                    <footer>
-                        <button name="save_conversation_action" string="Send Conversation" type="object" class="oe_highlight"/>                       
-                        or
-                        <button string="Cancel" class="oe_link" special="cancel" />                    
-                    </footer>                    
-                </form>
-            </field>
-        </record>		       
-                
+                        
         <!-- HELPDESK/TICKET -->
 		
         <record model="ir.ui.view" id="view_helpdesk_ticket_form">
@@ -63,8 +39,10 @@
                 <form string="Helpdesk Ticket" version="7.0">  
                     <header>                        
                         <button name="case_response" string="Response" type="object" class="oe_highlight" states="draft"/>                                                                       
+                        <button name="case_request" string="Request For Approval" type="object" class="oe_highlight" states="open"/>                                                                       
+                        <button name="approve_reject_action" string="Approve or Reject" type="object" class="oe_highlight" states="request"/>                                                                                               
                         <button name="case_close" string="Close Case" type="object" states="open" confirm="Are you sure to close this ticket?"/>                                                
-                        <button name="case_pending" string="Pending" type="object" states="open"/>                        
+                        <button name="case_pending" string="Pending" type="object   " states="open"/>                        
                         <button name="case_cancel_pending" string="Cancel Pending" type="object" class="oe_highlight" states="pending"/>
                         <button name="case_reset" string="Re-Open" type="object" states="cancel,done"/>                        
                         <button name="case_cancel" string="Cancel Case" type="object" states="open"/>                        
@@ -80,9 +58,11 @@
                             <field name="employee"/>
                             <field name="priority"/>		
                             <field name="technician"/>
-                            <field name="asset"/>		                            
+                            <field name="asset"/>	
+                            <field name="approved_date"/>			                            
                             <field name="end_date"/>		
                             <field name="duration"/>		
+                            <field name="approved_state"/>		
                             <field name="state"/>		                                
                         </group>
                         <notebook cols="4">
@@ -99,8 +79,8 @@
                         <button name="add_conversation_action" icon="gtk-add"  string="Add Conversation" type="object"/>
                         <field name="conversation_ids" widget="one2many_list">
                             <tree string="Conversation" >
-                                <field name="message_date"/>                            
-                                <field name="helpdesk_conversation_recipients" widget="many2many_tags"/>                                                                                       
+                                <field name="message_date"/>                    
+                                <field name="helpdesk_conversation_recipients" widget="many2many"/>
                                 <field name="description" widget="html"/>                                                                            
                             </tree>
                         </field>					                                
@@ -120,6 +100,7 @@
                     <field name="start_date"/>		
                     <field name="name"/>
                     <field name="employee"/>
+                    <field name="approved_state"/>
                     <field name="state"/>                    
                 </tree>
             </field>
@@ -144,7 +125,27 @@
                     </group>
                 </search>
             </field>
-        </record>                                        
+        </record>   
+        
+        <!-- HELPDESK/TICKET -->		
+        <!-- APPROVE OR REJECT POPUP WINDOW -->        
+        <record model="ir.ui.view" id="view_helpdesk_approved_form">
+            <field name="name">helpdesk.approved.form</field>
+            <field name="model">helpdesk.approved</field>						            					
+            <field name="arch" type="xml">
+                <form string="Helpdesk Ticket Approve or Reject" version="7.0">  
+                    <group>                                                                            
+                        <field name="approved_state"/>
+                        <field name="approved_comment"/>     
+                    </group>                    
+                    <footer>
+                        <button name="approve_reject" string="Continue Process" type="object" class="oe_highlight"/>                       
+                        or
+                        <button string="Cancel" class="oe_link" special="cancel" />                    
+                    </footer>                    
+                </form>
+            </field>
+        </record>	                                                                                 
         
         <!-- ASSETS/ACTION -->
 	<record model="ir.actions.act_window" id="action_helpdesk_category">
