@@ -160,14 +160,13 @@
             <field name="view_mode">tree,form</field>
         </record>	
                         
-        <record model="ir.actions.act_window" id="action_add_conversation" >
+        <record model="ir.actions.act_window" id="action_add_conversation">
             <field name="name">Add Conversation</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">helpdesk.conversation</field>
             <field name="view_type">form</field>
             <field name="view_mode">form</field>
-            <field name="target">new</field>
-            <field name="view_id" ref="view_helpdesk_conversation_form"/>
+            <field name="target">new</field>            
         </record>                       
         
         <!-- HELPDESK/MENU -->        
