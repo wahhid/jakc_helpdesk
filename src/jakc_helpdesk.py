@@ -38,6 +38,13 @@ AVAILABLE_STATES = [
     ('pending','Pending')
 ]
 
+pop3server = 'localhost'
+pop3port = '110'
+pop3user  = 'helpdesk@jakc.com'
+pop3password = 'P@ssw0rd'
+helpdesk_manager = 'whidayat@jakc.com'
+helpdesk_email = 'helpdesk@jakc.com'
+
 class helpdesk_category(osv.osv):
     _name = "helpdesk.category"
     _description = "Helpdesk Category"
@@ -70,14 +77,16 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
     _name = "helpdesk.ticket"
     _description = "Helpdesk Ticket"            
         
+
+        
     def connectpop3server(self, cr, uid, context=None):
-        pop3server = 'localhost'
-        port = '110'
-        user = 'helpdesk@jakc.com'
-        password = 'P@ssw0rd'
-        connection = POP3(pop3server, int(port))        
-        connection.user(user)
-        connection.pass_(password)
+        #pop3server = 'localhost'
+        #port = '110'
+        #user = 'helpdesk@jakc.com'
+        #password = 'P@ssw0rd'
+        connection = POP3(pop3server, int(pop3port))        
+        connection.user(pop3user)
+        connection.pass_(pop3password)
         return connection
     
     def _parse_track_id(self, subject):
@@ -198,7 +207,7 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
                 
                 email_data = {}
                 email_data['start_logger'] = 'Start Email Ticket Conversation Notification'
-                email_data['email_from'] = 'helpdesk@jakc.com'
+                email_data['email_from'] = helpdesk_email
                 email_data['email_to'] = employee.work_email
                 email_data['subject'] = "<" + track_id + "> "  + subject
                 email_data['body_html'] = body
@@ -256,7 +265,7 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
         #Create Conversation
         values = {}
         values['ticket_id'] = ticket['id']        
-        #values['email_from'] = 'helpdesk@jakc.com'
+        #values['email_from'] = helpdesk_email
         values['message_date'] = datetime.now()
         values['description'] = "Ticket was responsed"
         conversation_id = self.pool.get('helpdesk.conversation').create(cr, uid, values, context=context)
@@ -264,7 +273,7 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
         #Send Email Notification
         email_data = {}
         email_data['start_logger'] = 'Start Email Ticket Response Notification'
-        email_data['email_from'] = 'helpdesk@jakc.com'
+        email_data['email_from'] = helpdesk_email
         email_data['email_to'] = employee.work_email
         email_data['subject'] = "<" + ticket.trackid + "> " + ticket.name
         email_data['body_html'] = "Dear " + employee.name + "<br/>"  + " We already receieve your  with subject : " + ticket.name + ". We will proceed your request immediately. Thank you"
@@ -294,7 +303,7 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
         #Create Conversation
         values = {}
         values['ticket_id'] = ticket['id']        
-        #values['email_from'] = 'helpdesk@jakc.com'
+        #values['email_from'] = helpdesk_email
         values['message_date'] = datetime.now()
         values['description'] = "Request for approval"
         conversation_id = self.pool.get('helpdesk.conversation').create(cr, uid, values, context=context)
@@ -302,8 +311,8 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
         #Send Email Notification
         email_data = {}
         email_data['start_logger'] = 'Start Email Ticket Response Notification'
-        email_data['email_from'] = 'helpdesk@jakc.com'
-        email_data['email_to'] = 'whidayat@jakc.com'
+        email_data['email_from'] = helpdesk_email
+        email_data['email_to'] = helpdesk_manager
         email_data['subject'] = "<" + ticket.trackid + "> " + ticket.name
         msg = '<br/>'.join([
             'Dear Ibu Maryland',
@@ -367,7 +376,7 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
         #Send Email Notification
         email_data = {}
         email_data['start_logger'] = 'Start Email Ticket Closed Notification'
-        email_data['email_from'] = 'helpdesk@jakc.com'
+        email_data['email_from'] = helpdesk_email
         email_data['email_to'] = employee.work_email
         email_data['subject'] = "<" + ticket.trackid + "> " + ticket.name + " (Closed)"
         email_data['body_html'] = "Ticket track id : " + ticket.trackid + " was closed"        
@@ -447,7 +456,7 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
         employee = self.pool.get('hr.employee').browse(cr, uid, values['employee'], context=context)
         email_data = {}
         email_data['start_logger'] = 'Start Email Ticket Created Notification'
-        email_data['email_from'] = 'helpdesk@jakc.com'
+        email_data['email_from'] = helpdesk_email
         email_data['email_to'] = employee.work_email
         email_data['subject'] = "<" + trackid + "> Ticket Receieved Notification"
         email_data['body_html'] = "Ticket Receieved with track id : " + trackid
@@ -504,7 +513,7 @@ class helpdesk_approve_reject(osv.osv_memory):
         
         email_data = {}
         email_data['start_logger'] = 'Start Email Ticket Approval Notification'
-        email_data['email_from'] = 'helpdesk@jakc.com'
+        email_data['email_from'] = helpdesk_email
         email_data['email_to'] = employee.work_email
         email_data['subject'] = "<" + ticket.trackid + "> " + ticket.name + " (Approved)"
         serverUrl = 'http://localhost:8888/jasperserver'

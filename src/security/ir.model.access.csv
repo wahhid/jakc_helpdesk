@@ -1,5 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_itms_helpdesk_category_manager,itms.helpdesk.category.manager,model_helpdesk_category,base.group_itms_manager,1,1,1,1
 access_itms_helpdesk_ticket_manager,itms.helpdesk.ticket.manager,model_helpdesk_ticket,base.group_itms_manager,1,1,1,1
+access_itms_helpdesk_conversation_manager,itms.helpdesk.conversation.manager,model_helpdesk_conversation,base.group_itms_manager,1,1,1,1
 access_itms_helpdesk_category_operator,itms.helpdesk.category.operator,model_helpdesk_category,base.group_itms_operator,1,1,1,1
 access_itms_helpdesk_ticket_operator,itms.helpdesk.ticket.operator,model_helpdesk_ticket,base.group_itms_operator,1,1,1,1
+access_itms_helpdesk_conversation_operator,itms.helpdesk.conversation.operator,model_helpdesk_conversation,base.group_itms_operator,1,1,1,1
