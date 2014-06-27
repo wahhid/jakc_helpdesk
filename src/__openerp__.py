@@ -6,6 +6,7 @@
     'depends' : ['base_setup','base','mail','jakc_itms','jakc_assets'],
     'init_xml' : [],
     'data' : [			
+        'security/ir.model.access.csv'
         'jakc_helpdesk_view.xml',
         'jakc_helpdesk_report_view.xml',
         'jakc_helpdesk_conversation_view.xml',
