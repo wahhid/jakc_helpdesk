@@ -34,19 +34,23 @@ class helpdesk_conversation(osv.osv):
         values['message_date'] = message.message_date
         values['description'] = message.description
         values['inbound'] = message.inbound                            
-        conversation_id = self.pool.get('helpdesk.conversation').create(cr,uid,values,context=context)   
+        values['helpdesk_conversation_recipients'] = message.helpdesk_conversation_recipients
+        values['attachment_ids'] = message.attachment_ids
+        print values
+        conversation_id = super(helpdesk_conversation,self).create(cr,uid,values,context=context)   
         
         ticket = self.pool.get('helpdesk.ticket').browse(cr, uid, values['ticket_id'],context=context)
         employee = self.pool.get('hr.employee').browse(cr, uid, ticket.employee.id, context=context)
         
-        email_data = {}
-        email_data['start_logger'] = 'Start Email Ticket Conversation Notification'
-        email_data['email_from'] = 'helpdesk@jakc.com'
-        email_data['email_to'] = employee.work_email
-        email_data['subject'] = "<" + ticket.trackid + "> "  + ticket.name
-        email_data['body_html'] = message.description
-        email_data['end_logger'] = 'End Email Ticket Conversation Notification'
-        self._send_email_notification(cr, uid, email_data, context=context)                      
+        for emp in message.helpdesk_conversation_recipients:            
+            email_data = {}
+            email_data['start_logger'] = 'Start Email Ticket Conversation Notification'
+            email_data['email_from'] = 'helpdesk@jakc.com'
+            email_data['email_to'] = emp.work_email
+            email_data['subject'] = "<" + ticket.trackid + "> "  + ticket.name
+            email_data['body_html'] = message.description
+            email_data['end_logger'] = 'End Email Ticket Conversation Notification'
+            self._send_email_notification(cr, uid, email_data, context=context)                      
                     
         return {'type': 'ir.actions.act_window_close'}
         
@@ -71,7 +75,7 @@ class helpdesk_conversation(osv.osv):
     _defaults = {        
         'message_date': lambda *a: fields.datetime.now(),
     }            
-        
+    
     def _process_incoming_conversation(self,cr, uid,context=None):        
         _logger.info('Process Incoming Conversation Started')
         return True

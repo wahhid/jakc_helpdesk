@@ -4,6 +4,9 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
+reportserver = 'localhost'
+reportserverport = '8888'
+
 class helpdesk_daily_detail_report(osv.osv_memory):
     _name = "helpdesk.daily.detail.report"
     _columns = {
@@ -18,7 +21,7 @@ class helpdesk_daily_detail_report(osv.osv_memory):
     def generate_report(self, cr, uid, ids, context=None):
         params = self.browse(cr, uid, ids, context=context)
         param = params[0]   
-        serverUrl = 'http://172.16.139.139:8888/jasperserver'
+        serverUrl = 'http://' + reportserver + ':' + reportserverport +'/jasperserver'
         j_username = 'itms_operator'
         j_password = 'itms123'
         ParentFolderUri = '/itms'
@@ -43,7 +46,7 @@ class helpdesk_monthly_detail_report(osv.osv_memory):
     def generate_report(self, cr, uid, ids, context=None):
         params = self.browse(cr, uid, ids, context=context)
         param = params[0]   
-        serverUrl = 'http://localhost:8888/jasperserver'
+        serverUrl = 'http://' + reportserver + ':' + reportserverport +'/jasperserver'
         j_username = 'itms_operator'
         j_password = 'itms123'
         ParentFolderUri = '/itms'
@@ -68,7 +71,7 @@ class helpdesk_monthly_summary_report(osv.osv_memory):
     def generate_report(self, cr, uid, ids, context=None):
         params = self.browse(cr, uid, ids, context=context)
         param = params[0]   
-        serverUrl = 'http://localhost:8888/jasperserver'
+        serverUrl = 'http://' + reportserver + ':' + reportserverport +'/jasperserver'
         j_username = 'itms_operator'
         j_password = 'itms123'
         ParentFolderUri = '/itms'
