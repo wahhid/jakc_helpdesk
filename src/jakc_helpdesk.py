@@ -368,9 +368,36 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
         email_data['email_from'] = helpdesk_email
         email_data['email_to'] = employee.work_email
         email_data['subject'] = "<" + trackid + "> Ticket Receieved Notification"
-        email_data['body_html'] = "Ticket Receieved with track id : " + trackid
+        msg = '<br/>'.join([
+            'Dear Mr/Mrs ' + employee.name,
+            '',
+            '',
+            'We already receive your request with Track ID :' + trackid,
+            '',
+            'Subject',
+            '',
+            ticket.name,
+            '',
+            '',
+            'Problem',
+            '',
+            #ticket.description.replace('\n','<br/>'),
+            ticket.description,
+            '',
+            '',
+            '',
+            'Regards',
+            '',
+            '',
+            'IT Department'
+        ])
+        email_data['body_html'] = msg
+
+        #email_data['body_html'] = "Ticket Receieved with track id : " + trackid
         email_data['end_logger'] = 'End Email Ticket Created Notification'
         self._send_email_notification(cr, uid, email_data, context=context)                 
+        
+        #Send Notification to Technician
         
         return ticket_id
     
