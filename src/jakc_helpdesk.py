@@ -361,8 +361,10 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
 
         conversation_id = self.pool.get('helpdesk.conversation').create(cr, uid, conversation_data, context=context)                            
         _logger.info("Save Conversation")
-
+        
+        ticket  = self.pool.get('helpdesk.ticket').browse(cr, uid, [ticket_id], context=context)
         employee = self.pool.get('hr.employee').browse(cr, uid, values['employee'], context=context)
+        
         email_data = {}
         email_data['start_logger'] = 'Start Email Ticket Created Notification'
         email_data['email_from'] = helpdesk_email
