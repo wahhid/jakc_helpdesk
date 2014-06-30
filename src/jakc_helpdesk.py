@@ -397,43 +397,44 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
         self._send_email_notification(cr, uid, email_data, context=context)                 
         
         #Send Notification to Technician
-        filters = [('technician','=',True)] 
-        technician_ids = self.pool.get('res.users').search(cr, uid, filters, context=context)        
-        for technician_id in technician_ids:
-            emp = self.pool.get('hr.employee').browse(cr, uid, [('user_id','=',technician_id)])
-            if emp:
-                email_data = {}
-                email_data['start_logger'] = 'Start Email Ticket Created Technician Notification'
-                email_data['email_from'] = helpdesk_email
-                email_data['email_to'] = emp.work_email
-                email_data['subject'] = "<" + trackid + "> Ticket was Created"
-                msg = '<br/>'.join([
-                    'Dear  ' + employee.name,
-                    '',
-                    '',
-                    'There are new request with Track ID :' + trackid,
-                    '',
-                    'Subject',
-                    '',
-                    ticket.name,
-                    '',
-                    '',
-                    'Problem',
-                    '',
-                    #ticket.description.replace('\n','<br/>'),
-                    ticket.description,
-                    '',
-                    '',
-                    '',
-                    'Regards',
-                    '',
-                    '',
-                    'IT Department'
-                ])
-                email_data['body_html'] = msg
-                #email_data['body_html'] = "Ticket Receieved with track id : " + trackid
-                email_data['end_logger'] = 'End Email Ticket Created Technician Notification'
-                self._send_email_notification(cr, uid, email_data, context=context)                                     
+        #filters = [('technician','=',True)] 
+        #technician_ids = self.pool.get('res.users').search(cr, uid, filters, context=context)        
+        #for technician_id in technician_ids:
+        #    emp = self.pool.get('hr.employee').browse(cr, uid, [('user_id','=',technician_id)],context=context)
+        #    print emp
+        #    if emp:
+        #        email_data = {}
+        #        email_data['start_logger'] = 'Start Email Ticket Created Technician Notification'
+        #        email_data['email_from'] = helpdesk_email
+        #        email_data['email_to'] = emp.work_email
+        #        email_data['subject'] = "<" + trackid + "> Ticket was Created"
+        #        msg = '<br/>'.join([
+        #            'Dear  ' + employee.name,
+        #            '',
+        #            '',
+        #            'There are new request with Track ID :' + trackid,
+        #            '',
+        #            'Subject',
+        #            '',
+        #            ticket.name,
+        #            '',
+        #            '',
+        #            'Problem',
+        #            '',
+        #            #ticket.description.replace('\n','<br/>'),
+        #            ticket.description,
+        #            '',
+        #            '',
+        #            '',
+        #            'Regards',
+        #            '',
+        #            '',
+        #            'IT Department'
+        #        ])
+        #        email_data['body_html'] = msg
+        #        #email_data['body_html'] = "Ticket Receieved with track id : " + trackid
+        #        email_data['end_logger'] = 'End Email Ticket Created Technician Notification'
+        #        self._send_email_notification(cr, uid, email_data, context=context)                                     
         return ticket_id
     
     def write(self,cr, uid, ids, values, context=None ):
@@ -461,7 +462,21 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
             email_data['email_from'] = helpdesk_email
             email_data['email_to'] = employee.work_email
             email_data['subject'] = "<" + ticket.trackid + "> " + ticket.name
-            email_data['body_html'] = "Dear " + employee.name + "<br/>"  + " We already receieve your  with subject : " + ticket.name + ". We will proceed your request immediately. Thank you"
+            msg = '<br/>'.join([
+                'Dear ' + employee.name,
+                '',
+                '',
+                'We already receive your request with subject : ' + ticket.name,
+                '',
+                'We will proceed your request immediately',
+                '',
+                '',
+                'Regards',
+                '',
+                '',
+                'IT Department'                                
+            ])
+            email_data['body_html'] = msg
             email_data['end_logger'] = 'Start Email Ticket Response Notification'
             self._send_email_notification(cr, uid, email_data, context=context)  
             
@@ -548,7 +563,7 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
                 email_data['start_logger'] = 'Start Email Ticket Approval Notification'
                 email_data['email_from'] = helpdesk_email
                 email_data['email_to'] = employee.work_email
-                email_data['subject'] = "<" + ticket.trackid + "> " + ticket.name + " (Approved)"
+                email_data['subject'] = "<" + ticket.trackid + "> " + ticket.name + " (Approved and Closed)"
                 serverUrl = 'http://' + reportserver + ':' + reportserverport + '/jasperserver'
                 j_username = 'itms_operator'
                 j_password = 'itms123'
