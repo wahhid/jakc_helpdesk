@@ -13,7 +13,7 @@
                     <group>                                                    
                         <field name="ticket_id"/>
                         <field name="message_date"/>
-                        <field name="helpdesk_conversation_recipients" widget="many2many_tags"></field>                                                    
+                        <field name="helpdesk_conversation_recipients"/>                            
                         <field name="description"/>
                         <field name="attachment_ids" widget="many2many_binary"/>
                         <field name="inbound"/>

@@ -12,6 +12,7 @@
         'jakc_helpdesk_conversation_view.xml',
         'jakc_assets_view.xml',        
         'jakc_helpdesk_menu.xml',                        
+        'hr_employee_view.xml',
         'res_config_view.xml',
         'res_users_view.xml',
         'report/jakc_helpdesk_report_view.xml',        

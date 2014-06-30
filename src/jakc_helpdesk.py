@@ -161,7 +161,9 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
                 # dont forget to be careful to sanitize 'filename' and be carefull
                 # for filename collision, to before to save :
                 print '\tfilename=%r is_body=%s type=%s charset=%s desc=%s size=%d' % (attach.filename, attach.is_body, attach.type, attach.charset, attach.description, 0 if attach.payload==None else len(attach.payload))
-
+                if attach.filename:
+                    print attach.filename
+                    
                 if attach.is_body=='text/plain':
                     # print first 3 lines
                     body = ''
@@ -263,8 +265,8 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
     
 
     def case_response(self, cr, uid, ids, context=None):
-        #Change Status
-        self.write(cr,uid,ids,{'response_date':datetime.now(),'state':'response'},context=context)           
+        #Change Status        
+        self.write(cr,uid,ids,{'technician':uid,'response_date':datetime.now(),'state':'response'},context=context)           
         return True
     
     def case_request(self, cr, uid, ids, context=None):
@@ -500,6 +502,12 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
                 '',
                 'Mohon review and approval untuk request ini :',
                 '',
+                'Company : ' + employee.company.name,
+                '',
+                'Department : ' + employee.department_id.name,
+                '',
+                'User : ' + employee.name_related,
+                '',        
                 'Problem',
                 '',
                 ticket.description,
@@ -517,7 +525,7 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
             email_data['body_html'] = msg
             email_data['end_logger'] = 'Start Email Ticket Response Notification'
             self._send_email_notification(cr, uid, email_data, context=context)                    
-            
+                        
         if ticket.state == 'pending':
             #Create Conversation        
             values = {}
@@ -590,6 +598,8 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
                 email_data['body_html'] = msg
                 email_data['end_logger'] = 'End Email Ticket Approval Notification'
                 self._send_email_notification(cr, uid, email_data, context=context)                                 
+                #Send Notification to Technician
+                
             #Rejected
             if ticket.approved_state == '3':
                 super(helpdesk_ticket,self).write(cr, uid, ids, {'approved_state':'3','approved_date':datetime.now(),'state':'open'}, context=context)            
@@ -598,6 +608,7 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
                 values['message_date'] = datetime.now()
                 values['description'] = "Ticket Rejected by IT Manager"                
                 conversation_id = self.pool.get('helpdesk.conversation').create(cr, uid, values, context=context)
+                #Send Notification to Technician
 
                 
         if ticket.state == 'done':
