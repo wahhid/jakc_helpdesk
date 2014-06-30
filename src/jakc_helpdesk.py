@@ -1,11 +1,7 @@
 from openerp.addons.base_status.base_state import base_state
 from openerp.addons.base_status.base_stage import base_stage
 
-from imaplib import IMAP4
-from imaplib import IMAP4_SSL
 from poplib import POP3
-from poplib import POP3_SSL
-from imaplib import search
 import xmlrpclib
 
 
