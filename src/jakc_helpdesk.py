@@ -5,6 +5,7 @@ from imaplib import IMAP4
 from imaplib import IMAP4_SSL
 from poplib import POP3
 from poplib import POP3_SSL
+from imaplib import search
 import xmlrpclib
 
 
@@ -400,7 +401,43 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
         self._send_email_notification(cr, uid, email_data, context=context)                 
         
         #Send Notification to Technician
-        
+        filters = [('technician','=',True)] 
+        technician_ids = self.pool.get('res.users').search(cr, uid, filters, context=context)        
+        for technician_id in technician_ids:
+            emp = self.pool.get('hr.employee').browse(cr, uid, [('user_id','=',technician_id)])
+            if emp:
+                email_data = {}
+                email_data['start_logger'] = 'Start Email Ticket Created Technician Notification'
+                email_data['email_from'] = helpdesk_email
+                email_data['email_to'] = emp.work_email
+                email_data['subject'] = "<" + trackid + "> Ticket was Created"
+                msg = '<br/>'.join([
+                    'Dear  ' + employee.name,
+                    '',
+                    '',
+                    'There are new request with Track ID :' + trackid,
+                    '',
+                    'Subject',
+                    '',
+                    ticket.name,
+                    '',
+                    '',
+                    'Problem',
+                    '',
+                    #ticket.description.replace('\n','<br/>'),
+                    ticket.description,
+                    '',
+                    '',
+                    '',
+                    'Regards',
+                    '',
+                    '',
+                    'IT Department'
+                ])
+                email_data['body_html'] = msg
+                #email_data['body_html'] = "Ticket Receieved with track id : " + trackid
+                email_data['end_logger'] = 'End Email Ticket Created Technician Notification'
+                self._send_email_notification(cr, uid, email_data, context=context)                                     
         return ticket_id
     
     def write(self,cr, uid, ids, values, context=None ):
