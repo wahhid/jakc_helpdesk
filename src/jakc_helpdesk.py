@@ -155,8 +155,10 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
             attachments=mailattach.get_mail_contents(msg)                       
             subject=mailattach.getmailheader(msg.get('Subject', ''))
             desc = html2plaintext(msg.get('body'))
-            from_= mailattach.getmailaddresses(msg, 'from')
-            from_=('', '') if not from_ else from_[0]                                
+            from_ = mailattach.getmailaddresses(msg, 'from')
+            print from_
+            from_ =('', '') if not from_ else from_[0]                                
+            print from_            
             for attach in attachments:
                 # dont forget to be careful to sanitize 'filename' and be carefull
                 # for filename collision, to before to save :
@@ -221,9 +223,22 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
                 email_data = {}
                 email_data['start_logger'] = 'Start Email Not Register Notification'
                 email_data['email_from'] = helpdesk_email
-                email_data['email_to'] = form_[1]
+                email_data['email_to'] = from_[1]
                 email_data['subject'] = "Failed Ticket Request"
-                email_data['body_html'] = "Requester not register on the system, please contact IT Support"
+                msg = '<br/>'.join([
+                    'Dear Requester',
+                    '',
+                    '',
+                    'Your email not registered on our helpdesk system',
+                    'Please contact IT Support'
+                    '',
+                    '',
+                    'Regards',
+                    '',
+                    '',
+                    'IT Department'
+                ])
+                email_data['body_html'] = msg
                 email_data['end_logger'] = 'End Email Not Register Notification'
                 self._send_email_notification(cr, uid, email_data, context=context)                                     
                 pop_server.dele(num)   
@@ -340,6 +355,21 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
     }
     
     _order = 'start_date desc'
+    
+    def print_request(self, cr, uid, ids, context=None):
+        ticket_id = ids[0]
+        serverUrl = 'http://' + reportserver + ':' + reportserverport + '/jasperserver'
+        j_username = 'itms_operator'
+        j_password = 'itms123'
+        ParentFolderUri = '/itms'
+        reportUnit = '/itms/itsr_form'
+        url = serverUrl + '/flow.html?_flowId=viewReportFlow&standAlone=true&_flowId=viewReportFlow&ParentFolderUri=' + ParentFolderUri + '&reportUnit=' + reportUnit + '&TICKET_ID=' + str(ticket_id) + '&APPROVED_STATE=2&decorate=no&j_username=' + j_username + '&j_password=' + j_password + '&output=pdf'
+        return {
+            'type':'ir.actions.act_url',
+            'url': url,
+            'nodestroy': True,
+            'target': 'new' 
+        }        
         
     def create(self, cr, uid, values, context=None):		                                
         trackid = self._id_generator(cr, uid, context=context)        
@@ -597,7 +627,7 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
                 ])        
                 email_data['body_html'] = msg
                 email_data['end_logger'] = 'End Email Ticket Approval Notification'
-                self._send_email_notification(cr, uid, email_data, context=context)                                 
+                self._send_email_notification(cr, uid, email_data, context=context)                     
                 #Send Notification to Technician
                 
             #Rejected
