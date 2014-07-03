@@ -623,7 +623,7 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
                     '',
                     'Regards',
                     '',
-                    'IT Helpdesk'
+                    'IT Department'
                 ])        
                 email_data['body_html'] = msg
                 email_data['end_logger'] = 'End Email Ticket Approval Notification'
@@ -654,7 +654,19 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
             email_data['email_from'] = helpdesk_email
             email_data['email_to'] = employee.work_email
             email_data['subject'] = "<" + ticket.trackid + "> " + ticket.name + " (Closed)"
-            email_data['body_html'] = "Ticket track id : " + ticket.trackid + " was closed"        
+            msg = '<br/>'.join([
+                'Dear ' + employee.name,
+                '',
+                '',
+                'Your ticket with track id : ' + ticket.trackid + ' already closed',
+                '',
+                '',
+                '',
+                'Regards',
+                '',
+                'IT Department'
+            ])        
+            email_data['body_html'] = msg       
             email_data['end_logger'] = 'End Email Ticket Closed Notification'
             self._send_email_notification(cr, uid, email_data, context=context)   
             
