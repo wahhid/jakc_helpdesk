@@ -81,7 +81,9 @@
                         <field name="conversation_ids" widget="one2many_list">
                             <tree string="Conversation" >
                                 <field name="message_date"/>                    
-                                <field name="helpdesk_conversation_recipients"></field>
+                                <field name="helpdesk_conversation_recipients" widget="many2many_tags">                                   
+                                    <field name="name_related"/>                                    
+                                </field>
                                 <field name="description"/>                                                                            
                             </tree>
                         </field>					                                

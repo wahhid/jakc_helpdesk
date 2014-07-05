@@ -35,7 +35,7 @@ class helpdesk_conversation(osv.osv):
         values['description'] = message.description
         values['inbound'] = message.inbound                            
         values['helpdesk_conversation_recipients'] = message.helpdesk_conversation_recipients
-        values['attachment_ids'] = message.attachment_ids
+        values['attachments'] = message.attachments
         print values
         conversation_id = super(helpdesk_conversation,self).create(cr,uid,values,context=context)   
         
@@ -64,11 +64,9 @@ class helpdesk_conversation(osv.osv):
             'Recipients'),
         'message_date': fields.datetime('Date'),
         'name': fields.char('Name', size=100, required=True),
-        'description': fields.text('Description'),
-        'attachment_ids': fields.many2many('ir.attachment',
-            'helpdesk_conversation_ir_attachments_rel',
-            'helpdesk_conversation_id', 'ir_attachment_id', 'Attachments'),        
-        'inbound': fields.boolean('Inbound'),             
+        'description': fields.text('Description'),        
+        'attachments': fields.many2many('ir.attachment',string="Attachments"),             
+        'inbound': fields.boolean('Inbound')
     }
     _order = "message_date desc"
             
