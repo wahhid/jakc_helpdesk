@@ -26,21 +26,19 @@ class helpdesk_conversation(osv.osv):
         _logger.info(values['end_logger'])    
         
     def save_conversation_action(self, cr, uid, ids, context=None):                
-        messages = self.browse(cr, uid, ids, context=context)
-        message = messages[0]
-        print message
+        message = self.browse(cr, uid, ids, context=context)[0]        
         values = {}
-        values['ticket_id'] = context.get('ticket_id',False)
+        values['ticket_id'] = message.ticket_id
         values['message_date'] = message.message_date
         values['description'] = message.description
         values['inbound'] = message.inbound                            
-        values['helpdesk_conversation_recipients'] = message.helpdesk_conversation_recipients
-        values['attachments'] = message.attachments
-        print values
+        #values['helpdesk_conversation_recipients'] = message.helpdesk_conversation_recipients
+        #values['helpdesk_conversation_senders'] = message.helpdesk_conversation_senders
+        #values['attachments'] = message.attachments        
         conversation_id = super(helpdesk_conversation,self).create(cr,uid,values,context=context)   
         
         ticket = self.pool.get('helpdesk.ticket').browse(cr, uid, values['ticket_id'],context=context)
-        employee = self.pool.get('hr.employee').browse(cr, uid, ticket.employee.id, context=context)
+        #employee = self.pool.get('hr.employee').browse(cr, uid, ticket.employee.id, context=context)
         
         for emp in message.helpdesk_conversation_recipients:            
             email_data = {}
@@ -55,8 +53,13 @@ class helpdesk_conversation(osv.osv):
         return {'type': 'ir.actions.act_window_close'}
         
     _columns = {
-        'ticket_id': fields.many2one('helpdesk.ticket', 'Ticket', readonly=True),    
-        'email_from': fields.many2one('hr.employee','Employee', readonly=True),
+        'ticket_id': fields.many2one('helpdesk.ticket', 'Ticket', readonly=True),            
+        'helpdesk_conversation_senders': fields.many2many('hr.employee',
+            'helpdesk_conversation_senders_rel',
+            'helpdesk_conversation_id',
+            'hr_employee_id',
+            'Senders'
+        ),        
         'helpdesk_conversation_recipients': fields.many2many('hr.employee', 
             'helpdesk_conversation_recipients_rel',
             'helpdesk_conversation_id',
@@ -71,7 +74,7 @@ class helpdesk_conversation(osv.osv):
     _order = "message_date desc"
             
     _defaults = {        
-        'message_date': lambda *a: fields.datetime.now(),
+        'message_date': lambda *a: fields.datetime.now(),        
     }            
     
     def _process_incoming_conversation(self,cr, uid,context=None):        

@@ -7,41 +7,34 @@
         <!-- POPUP WINDOW -->        
         <record model="ir.ui.view" id="view_helpdesk_conversation_form">
             <field name="name">helpdesk.conversation.form</field>
-            <field name="model">helpdesk.conversation</field>						            					
+            <field name="model">helpdesk.conversation</field>						            					            
             <field name="arch" type="xml">
                 <form string="Helpdesk Conversation" version="7.0">  
                     <group>                                                    
                         <field name="ticket_id"/>
                         <field name="message_date"/>
-                        <field name="helpdesk_conversation_recipients" widget="many2many_kanban">
-                            <kanban quick_create="false" create="true">
-                                <field name="name_related"/>
-                                <templates>
-                                    <t t-name="kanban-box">
-                                        <div style="position: relative">
-                                            <a t-if="! read_only_mode" type="delete" style="position: absolute; right: 0; padding: 4px; diplay: inline-block">X</a>
-                                            <div class="oe_module_vignette">
-                                                <div class="oe_module_desc">
-                                                    <field name="name_related"/>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </t>
-                                </templates>
-                            </kanban>
-                        </field>                                                                         
+                        <field name="helpdesk_conversation_senders" widget="many2many_tags"/>                                  
+                        <field name="helpdesk_conversation_recipients" widget="many2many_tags"/>                                  
                         <field name="description"/>
                         <field name="attachments" widget="many2many_binary"/>                                              
                         <field name="inbound"/>
-                    </group>                    
+                    </group>           
                     <footer>
                         <button name="save_conversation_action" string="Send Conversation" type="object" class="oe_highlight"/>                       
                         or
                         <button string="Cancel" class="oe_link" special="cancel" />                    
-                    </footer>                    
+                    </footer>                              
                 </form>
             </field>
         </record>		       
-        
+
+        <record id="action_helpdesk_conversation_form" model="ir.actions.act_window"> 
+            <field name="name">Helpdesk Conversation</field>             
+            <field name="res_model">helpdesk.conversation</field> 
+            <field name="view_type">form</field> 
+            <field name="view_mode">form</field> 
+            <field name="target">new</field> 
+            <field name="context">{'default_ticket_id': active_id}</field>
+        </record>                 
     </data>
 </openerp>

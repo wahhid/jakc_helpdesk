@@ -253,17 +253,21 @@ class helpdesk_ticket(base_state, base_stage, osv.osv):
     
     
     def add_conversation_action(self, cr, uid, ids, context=None):               
-        print ids
-        print context
+        mod_obj = self.pool.get('ir.model.data')  
+        view_ref = mod_obj.get_object_reference(cr, uid, 'jakc_helpdesk', 'view_helpdesk_conversation_form')
+        view_id = view_ref and view_ref[1] or False
+        #wizard_id = self.pool.get('helpdesk.conversation').create(cr, uid, vals={'ticket_id':ids[0]}, context=context)
         return {
                'type': 'ir.actions.act_window',
                'name': 'Add Conversation',
                'view_mode': 'form',
                'view_type': 'form',               
+               'view_id': view_id,
                'res_model': 'helpdesk.conversation',
                'nodestroy': True,
                'target':'new',
-               'context': {'ticket_id': ids[0]},
+               'res_id': False,
+               'context': {'ticket_id': ids[0]},                              
     }       
     
     def approve_reject_action(self, cr, uid, ids, context=None):               
